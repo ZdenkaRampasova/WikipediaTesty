@@ -9,82 +9,80 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import java.util.concurrent.TimeUnit;
 
 public class Wikipedia {
-
-    WebDriver prohlizec;
+    public static final String URL_BASE = "https://cs.wikipedia.org/wiki/";
+    public static final String PHILOSOPHY_URL_ENDING = "/Filosofie";
+    public static final String FIRST_LINK_XPATH = "//div/p/a[@href]";
+    WebDriver driver;
 
     @BeforeEach
     public void setUp() {
 //      System.setProperty("webdriver.gecko.driver", System.getProperty("user.home") + "/Java-Training/Selenium/geckodriver");
         System.setProperty("webdriver.gecko.driver", "C:\\Java-Training\\Selenium\\geckodriver.exe");
-        prohlizec = new FirefoxDriver();
-        prohlizec.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
+        driver = new FirefoxDriver();
+        driver.manage().timeouts().implicitlyWait(30, TimeUnit.SECONDS);
     }
 
     @Test
     public void notAllRoadsLeadToPhilosophy() {
-        prohlizec.navigate().to("https://cs.wikipedia.org/wiki/Testov%C3%A1n%C3%AD_softwaru");
+        goToURL("Testov%C3%A1n%C3%AD_softwaru");
 
-        int pocetPrechodu = 0;
+        clickOnFirstLinkUntilPhilosophyAndPrintNumberOfTransitions();
 
-        while (!prohlizec.getCurrentUrl().endsWith("/Filosofie")) {
-            WebElement prvniOdkaz = prohlizec.findElement(By.xpath("//div/p/a[@href]"));
-            prvniOdkaz.click();
-            pocetPrechodu = ++pocetPrechodu;
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        System.out.println("K filosofii vedlo " + pocetPrechodu + " klikanců.");
-
-        Assertions.assertTrue(prohlizec.getCurrentUrl().endsWith("//Filosofie"));
+        assertWeAreOnPhilosophySite();
     }
 
     @Test
     public void allRoadsLeadToRoads() {
-        prohlizec.navigate().to("https://cs.wikipedia.org/wiki/Plat%C3%B3n");
+        goToURL("Plat%C3%B3n");
 
-        int pocetPrechodu = 0;
+        clickOnFirstLinkUntilPhilosophyAndPrintNumberOfTransitions();
 
-        while (!prohlizec.getCurrentUrl().endsWith("/Filosofie")) {
-            WebElement prvniOdkaz = prohlizec.findElement(By.xpath("//div/p/a[@href]"));
-            prvniOdkaz.click();
-            pocetPrechodu = ++pocetPrechodu;
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        System.out.println("K filosofii vedlo " + pocetPrechodu + " klikanců.");
-
-        Assertions.assertTrue(prohlizec.getCurrentUrl().endsWith("//Filosofie"));
+        assertWeAreOnPhilosophySite();
     }
 
     @Test
     public void atLeastOneRoadLeadsToPhilosophy() {
-        prohlizec.navigate().to("https://cs.wikipedia.org/wiki/Filosof");
+        goToURL("Filosof");
 
-        int pocetPrechodu = 0;
+        clickOnFirstLinkUntilPhilosophyAndPrintNumberOfTransitions();
 
-        while (!prohlizec.getCurrentUrl().endsWith("/Filosofie")) {
-            WebElement prvniOdkaz = prohlizec.findElement(By.xpath("//div/p/a[@href]"));
-            prvniOdkaz.click();
-            pocetPrechodu = ++pocetPrechodu;
+        assertWeAreOnPhilosophySite();
+    }
+
+    @AfterEach
+    public void tearDown() {
+        driver.close();
+    }
+
+    public void goToURL (String endOfURL) {
+        driver.navigate().to(URL_BASE + endOfURL);
+    }
+
+    public void clickOnFirstLinkUntilPhilosophyAndPrintNumberOfTransitions() {
+        int numberOfTransitions = 0;
+
+        while (!areWeOnPhilosophySite()) {
+            transitionToFirstLink();
+            numberOfTransitions = ++numberOfTransitions;
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        System.out.println("K filosofii vedlo " + pocetPrechodu + " klikanců.");
-
-        Assertions.assertTrue(prohlizec.getCurrentUrl().endsWith("/Filosofie"));
+        System.out.println("Road to philosophy is " + numberOfTransitions + " click(s) long.");
     }
 
-    @AfterEach
-    public void tearDown() {
-        prohlizec.close();
+    public void assertWeAreOnPhilosophySite () {
+        Assertions.assertTrue(driver.getCurrentUrl().endsWith(PHILOSOPHY_URL_ENDING));
+    }
+
+    public void transitionToFirstLink() {
+        WebElement firstLink = driver.findElement(By.xpath(FIRST_LINK_XPATH));
+        firstLink.click();
+    }
+
+    public boolean areWeOnPhilosophySite() {
+        return driver.getCurrentUrl().endsWith(PHILOSOPHY_URL_ENDING);
     }
 }
